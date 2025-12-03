@@ -48,17 +48,94 @@
               opacity: 0.9;
           }
 
-          .iframe-container {
-              position: relative;
-              width: 100%;
-              height: 700px;
+          .form-container {
+              padding: 40px;
               background: #f5f5f5;
           }
 
-          iframe {
+          .form-group {
+              margin-bottom: 25px;
+          }
+
+          .form-group label {
+              display: block;
+              margin-bottom: 8px;
+              color: #333;
+              font-weight: 500;
+              font-size: 1em;
+          }
+
+          .form-group input,
+          .form-group textarea,
+          .form-group select {
               width: 100%;
-              height: 100%;
+              padding: 12px 15px;
+              border: 2px solid #ddd;
+              border-radius: 6px;
+              font-size: 1em;
+              font-family: inherit;
+              transition: border-color 0.3s ease;
+          }
+
+          .form-group input:focus,
+          .form-group textarea:focus,
+          .form-group select:focus {
+              outline: none;
+              border-color: #667eea;
+          }
+
+          .form-group textarea {
+              min-height: 120px;
+              resize: vertical;
+          }
+
+          .submit-btn {
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 15px 40px;
               border: none;
+              border-radius: 6px;
+              font-size: 1.1em;
+              font-weight: 600;
+              cursor: pointer;
+              transition: transform 0.2s ease, box-shadow 0.2s ease;
+              width: 100%;
+          }
+
+          .submit-btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+          }
+
+          .submit-btn:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+              transform: none;
+          }
+
+          .success-message,
+          .error-message {
+              padding: 15px;
+              border-radius: 6px;
+              margin-bottom: 20px;
+              display: none;
+          }
+
+          .success-message {
+              background: #d4edda;
+              color: #155724;
+              border: 1px solid #c3e6cb;
+          }
+
+          .error-message {
+              background: #f8d7da;
+              color: #721c24;
+              border: 1px solid #f5c6cb;
+          }
+
+          .success-message.show,
+          .error-message.show {
+              display: block;
           }
 
           @media (max-width: 768px) {
@@ -70,8 +147,8 @@
                   font-size: 1em;
               }
 
-              .iframe-container {
-                  height: 600px;
+              .form-container {
+                  padding: 20px;
               }
           }
       </style>
@@ -82,13 +159,98 @@
               <h1>Survey Form</h1>
               <p>Please take a moment to complete our survey</p>
           </div>
-          <div class="iframe-container">
-              <iframe
-                  src="https://namibia.app.n8n.cloud/form/d1639dd1-566b-4a37-a5f6-ae53fb891703"
-                  title="Survey Form"
-                  allowfullscreen
-              ></iframe>
+          <div class="form-container">
+              <div id="successMessage" class="success-message">
+                  Thank you! Your survey has been submitted successfully.
+              </div>
+              <div id="errorMessage" class="error-message">
+                  Something went wrong. Please try again later.
+              </div>
+              <form id="surveyForm">
+                  <div class="form-group">
+                      <label for="name">Name *</label>
+                      <input type="text" id="name" name="name" required>
+                  </div>
+
+                  <div class="form-group">
+                      <label for="email">Email *</label>
+                      <input type="email" id="email" name="email" required>
+                  </div>
+
+                  <div class="form-group">
+                      <label for="phone">Phone Number</label>
+                      <input type="tel" id="phone" name="phone">
+                  </div>
+
+                  <div class="form-group">
+                      <label for="satisfaction">How satisfied are you? *</label>
+                      <select id="satisfaction" name="satisfaction" required>
+                          <option value="">Please select...</option>
+                          <option value="very_satisfied">Very Satisfied</option>
+                          <option value="satisfied">Satisfied</option>
+                          <option value="neutral">Neutral</option>
+                          <option value="dissatisfied">Dissatisfied</option>
+                          <option value="very_dissatisfied">Very Dissatisfied</option>
+                      </select>
+                  </div>
+
+                  <div class="form-group">
+                      <label for="comments">Additional Comments</label>
+                      <textarea id="comments" name="comments" placeholder="Please share your thoughts..."></textarea>
+                  </div>
+
+                  <button type="submit" class="submit-btn">Submit Survey</button>
+              </form>
           </div>
       </div>
+
+      <script>
+          const form = document.getElementById('surveyForm');
+          const successMessage = document.getElementById('successMessage');
+          const errorMessage = document.getElementById('errorMessage');
+          const submitBtn = form.querySelector('.submit-btn');
+
+          form.addEventListener('submit', async (e) => {
+              e.preventDefault();
+
+              // Hide any previous messages
+              successMessage.classList.remove('show');
+              errorMessage.classList.remove('show');
+
+              // Disable submit button
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Submitting...';
+
+              // Get form data
+              const formData = new FormData(form);
+              const data = Object.fromEntries(formData.entries());
+
+              try {
+                  const response = await fetch('https://namibia.app.n8n.cloud/form/d1639dd1-566b-4a37-a5f6-ae53fb891703', {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify(data)
+                  });
+
+                  if (response.ok) {
+                      successMessage.classList.add('show');
+                      form.reset();
+                      // Scroll to success message
+                      successMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  } else {
+                      errorMessage.classList.add('show');
+                  }
+              } catch (error) {
+                  console.error('Error:', error);
+                  errorMessage.classList.add('show');
+              } finally {
+                  // Re-enable submit button
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = 'Submit Survey';
+              }
+          });
+      </script>
   </body>
   </html>
